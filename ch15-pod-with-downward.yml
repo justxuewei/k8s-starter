@@ -27,6 +27,6 @@ spec:
         sources:
           - downwardAPI:
               items:
-                - paths: "labels"
+                - path: "labels"
                   fieldRef:
                     fieldPath: metadata.labels
