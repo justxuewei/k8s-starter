@@ -9,7 +9,7 @@ spec:
     - port: 80
       name: web
   # headless service
-  clusterIP: none
+  clusterIP: None
   # label selector
   selector:
     app: nginx
