@@ -152,4 +152,4 @@ spec:
         storageClassName: rook-ceph-block
         resources:
           requests:
-            stroage: 10Gi
+            storage: 10Gi
