@@ -149,6 +149,7 @@ spec:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
+        storageClassName: rook-ceph-block
         resources:
           requests:
             stroage: 10Gi
