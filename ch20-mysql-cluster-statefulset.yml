@@ -105,7 +105,7 @@ spec:
             - |
               set -ex
               cd /var/lib/mysql
-              
+
               if [[ -f xtrabackup_slave_info ]]; then
                 mv xtrabackup_slave_info change_master_to.sql.in
                 rm -f xtrabackup_binlog_info
