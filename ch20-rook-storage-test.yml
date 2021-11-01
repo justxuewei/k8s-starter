@@ -1,11 +1,13 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: test
+  name: my-pv-claim
+  labels:
+    type: rook-ceph-block-pvc
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 3Gi
-    storageClassName: rook-ceph-block
+  storageClassName: rook-ceph-block
