@@ -21,8 +21,10 @@ spec:
             spec:
               type: object
               properties:
-                cidr: string
-                gateway: string
+                cidr:
+                  type: string
+                gateway:
+                  type: string
   names:
     # kind 通常是单数形式的驼峰编码（PascalCased）形式。你的资源清单会使用这一形式。
     kind: Network
