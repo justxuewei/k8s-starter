@@ -14,6 +14,15 @@ spec:
       served: true
       # 其中一个且只有一个版本必需被标记为存储版本
       storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                cidr: string
+                gateway: string
   names:
     # kind 通常是单数形式的驼峰编码（PascalCased）形式。你的资源清单会使用这一形式。
     kind: Network
