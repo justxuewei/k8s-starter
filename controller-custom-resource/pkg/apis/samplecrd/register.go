@@ -1,6 +1,6 @@
 package samplecrd
 
 const (
-	GroupName = "samplecrd.k8s.io"
+	GroupName = "samplecrd.nxw.name"
 	Version   = "v1"
 )
