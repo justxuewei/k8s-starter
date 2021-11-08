@@ -1,11 +1,25 @@
+# https://kubernetes.io/zh/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  # 名字必需与下面的 spec 字段匹配，并且格式为 '<名称的复数形式>.<组名>'
   name: networks.samplecrd.k8s.io
 spec:
+  # 组名称，用于 REST API: /apis/<组>/<版本>
   group: samplecrd.k8s.io
-  version: v1
+  # 列举此 CustomResourceDefinition 所支持的版本
+  versions:
+    - name: v1
+      # 每个版本都可以通过 served 标志来独立启用或禁止
+      served: true
+      # 其中一个且只有一个版本必需被标记为存储版本
+      storage: true
   names:
+    # kind 通常是单数形式的驼峰编码（PascalCased）形式。你的资源清单会使用这一形式。
     kind: Network
+    # 名称的单数形式，作为命令行使用时和显示时的别名
+    singular: network
+    # 名称的复数形式，用于 URL：/apis/<组>/<版本>/<名称的复数形式>
     plural: networks
+  # 可以是 Namespaced 或 Cluster
   scope: Namespaced
