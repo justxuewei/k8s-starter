@@ -1,15 +1,18 @@
 package main
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
+	samplecrdv1 "github.com/justxuewei/k8s_starter/samplecrd/pkg/apis/samplecrd/v1"
 	clientset "github.com/justxuewei/k8s_starter/samplecrd/pkg/client/clientset/versioned"
 	networkscheme "github.com/justxuewei/k8s_starter/samplecrd/pkg/client/clientset/versioned/scheme"
 	informers "github.com/justxuewei/k8s_starter/samplecrd/pkg/client/informers/externalversions/samplecrd/v1"
@@ -61,12 +64,43 @@ func NewController(
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(klog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
 		kubeclientset: kubeclientset,
 		networkclientset: networkclientset,
 		networksLister: networkInformer.Lister(),
+		networksSynced: networkInformer.Informer().HasSynced,
+		workqueue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Networks"),
+		recorder: recorder,
 	}
 
+	klog.Info("Setting up event handlers")
+	// Set up an event handler for when Network resources change
+	networkInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: controller.enqueueNetwork,
+		UpdateFunc: func(old, new interface{}) {
+			oldNetwork := old.(*samplecrdv1.Network)
+			newNetwork := new.(*samplecrdv1.Network)
+			if oldNetwork.ResourceVersion == newNetwork.ResourceVersion {
+				return
+			}
+			controller.enqueueNetwork(new)
+		},
+		DeleteFunc: controller.enqueueNetworkForDelete,
+	})
+
 	return controller
+}
+
+func (c *Controller) Run(threadiness int, stop <-chan struct{}) error {
+	return nil
+}
+
+func (c *Controller) enqueueNetwork(obj interface{}) {
+
+}
+
+func (c *Controller) enqueueNetworkForDelete(obj interface{}) {
+
 }

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"time"
 
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
@@ -50,8 +49,15 @@ func main() {
 		klog.Fatalf("Error building network clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second * 30)
-	networkInformaerFactory := informers.NewSharedInformerFactory(networkClient, time.Second * 30)
+	// get network informer factory
+	networkInformerFactory := informers.NewSharedInformerFactory(networkClient, time.Second * 30)
 
-	controller := NewC
+	controller := NewController(kubeClient, networkClient, networkInformerFactory.Samplecrd().V1().Networks())
+
+	// TODO(justxuewei): What does this line of code do?
+	go networkInformerFactory.Start(stopCh)
+
+	if err = controller.Run(2, stopCh); err != nil {
+		klog.Fatalf("Error running controller: %s", err.Error())
+	}
 }
