@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -10,6 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 
 	samplecrdv1 "github.com/justxuewei/k8s_starter/samplecrd/pkg/apis/samplecrd/v1"
@@ -93,8 +97,31 @@ func NewController(
 	return controller
 }
 
-func (c *Controller) Run(threadiness int, stop <-chan struct{}) error {
+func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
+	defer runtime.HandleCrash()
+	defer c.workqueue.ShutDown()
+
+	klog.Info("Starting Network control loop")
+
+	klog.Info("Waiting for informer caches to sync")
+	if ok := cache.WaitForCacheSync(stopCh, c.networksSynced); !ok {
+		return fmt.Errorf("failed to wait for caches to sync")
+	}
+
+	klog.Info("Starting workers")
+	for i:=0; i<threadiness; i++ {
+		go wait.Until(c.runWorker, time.Second, stopCh)
+	}
+	klog.Info("Started workers")
+
+	<-stopCh
+	klog.Info("Shutting down workers")
+
 	return nil
+}
+
+func (c *Controller) runWorker() {
+
 }
 
 func (c *Controller) enqueueNetwork(obj interface{}) {
