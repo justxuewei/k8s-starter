@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -185,6 +186,38 @@ func (c *Controller) processNextWorkItem() bool {
 }
 
 func (c *Controller) syncHandler(key string) error {
+	// Convert the namespace/name string into a distinct namespace and name
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("invalid resource key: '%s'", key))
+		return nil
+	}
+
+	// Get the Network resource with this namespace/name
+	network, err := c.networksLister.Networks(namespace).Get(name)
+	if err != nil {
+		// The Network resource may no longer exist, in which case we stop
+		// processing.
+		if errors.IsNotFound(err) {
+			klog.Warningf("Network: %s/%s does not exist in local cache, will delete it from Neutron...",
+				namespace, name)
+			klog.Infof("[Neutron] Deleting network: %s/%s...", namespace, name)
+
+			// FIXME: call Neutron API to delete this network by name.
+			// neutron.Delete(namespace, name)
+
+			return nil
+		}
+
+		runtime.HandleError(fmt.Errorf("failed to list network by: %s/%s", namespace, name))
+
+		return err
+	}
+
+	klog.Infof("[Neutron] Try to process network: %#")
+
+	c.recorder.Eventf(network, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+
 	return nil
 }
 
