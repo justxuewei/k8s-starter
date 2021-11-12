@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -222,9 +222,19 @@ func (c *Controller) syncHandler(key string) error {
 }
 
 func (c *Controller) enqueueNetwork(obj interface{}) {
-
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		runtime.HandleError(err)
+		return
+	}
+	c.workqueue.AddRateLimited(key)
 }
 
 func (c *Controller) enqueueNetworkForDelete(obj interface{}) {
-
+	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	if err != nil {
+		runtime.HandleError(err)
+		return
+	}
+	c.workqueue.AddRateLimited(key)
 }
