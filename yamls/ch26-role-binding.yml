@@ -8,6 +8,6 @@ subjects:
     name: example-sa
     namespace: mynamespace
 roleRef:
-  - kind: Role
-    name: example-role
-    apiGroups: rbac.authorization.k8s.io
+  kind: Role
+  name: example-role
+  apiGroup: rbac.authorization.k8s.io
