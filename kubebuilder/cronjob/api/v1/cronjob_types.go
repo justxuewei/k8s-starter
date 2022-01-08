@@ -17,10 +17,9 @@ limitations under the License.
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -54,21 +53,21 @@ type CronJobSpec struct {
 	Suspend *bool `json:"suspend,omitempty"`
 
 	// Specifies the job that will be created when executing a CronJob.
-	JobTemplate batchv1beta1.JobTemplateSpec `json: "jobTemplate"`
+	JobTemplate batchv1beta1.JobTemplateSpec `json:"jobTemplate"`
 
 	//+kubebuilder:validation:Minimum=0
 
-    // The number of successful finished jobs to retain.
-    // This is a pointer to distinguish between explicit zero and not specified.
-    // +optional
-    SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
+	// The number of successful finished jobs to retain.
+	// This is a pointer to distinguish between explicit zero and not specified.
+	// +optional
+	SuccessfulJobsHistoryLimit *int32 `json:"successfulJobsHistoryLimit,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 
-    // The number of failed finished jobs to retain.
-    // This is a pointer to distinguish between explicit zero and not specified.
-    // +optional
-    FailedJobsHistoryLimit *int32 `json:"failedJobsHistoryLimit,omitempty"`
+	// The number of failed finished jobs to retain.
+	// This is a pointer to distinguish between explicit zero and not specified.
+	// +optional
+	FailedJobsHistoryLimit *int32 `json:"failedJobsHistoryLimit,omitempty"`
 }
 
 // CronJobStatus defines the observed state of CronJob
@@ -77,12 +76,12 @@ type CronJobStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// A list of pointers to currently running jobs.
-    // +optional
-    Active []corev1.ObjectReference `json:"active,omitempty"`
+	// +optional
+	Active []corev1.ObjectReference `json:"active,omitempty"`
 
-    // Information when was the last time the job was successfully scheduled.
-    // +optional
-    LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
+	// Information when was the last time the job was successfully scheduled.
+	// +optional
+	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -118,13 +117,13 @@ func init() {
 type ConcurrencyPolicy string
 
 const (
-    // AllowConcurrent allows CronJobs to run concurrently.
-    AllowConcurrent ConcurrencyPolicy = "Allow"
+	// AllowConcurrent allows CronJobs to run concurrently.
+	AllowConcurrent ConcurrencyPolicy = "Allow"
 
-    // ForbidConcurrent forbids concurrent runs, skipping next run if previous
-    // hasn't finished yet.
-    ForbidConcurrent ConcurrencyPolicy = "Forbid"
+	// ForbidConcurrent forbids concurrent runs, skipping next run if previous
+	// hasn't finished yet.
+	ForbidConcurrent ConcurrencyPolicy = "Forbid"
 
-    // ReplaceConcurrent cancels currently running job and replaces it with a new one.
-    ReplaceConcurrent ConcurrencyPolicy = "Replace"
+	// ReplaceConcurrent cancels currently running job and replaces it with a new one.
+	ReplaceConcurrent ConcurrencyPolicy = "Replace"
 )
