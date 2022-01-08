@@ -227,7 +227,23 @@ func (r *CronJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
-	return ctrl.Result{}, nil
+	// actually make the job...
+	job, err := constructJobForCronJob(r, &cronJob, missedRun)
+	if err != nil {
+		log.Error(err, "unable to construct job from template")
+		// don't bother requeuing until we get a change to the spec
+		return scheduledResult, nil
+	}
+
+	// ...and create it on the cluster
+	if err := r.Create(ctx, job); err != nil {
+		log.Error(err, "unable to create Job for CronJob", "job", job)
+		return ctrl.Result{}, err
+	}
+
+	log.V(1).Info("created Job for CronJob run", "job", job)
+
+	return scheduledResult, nil
 }
 
 func isJobFinished(job *kbatch.Job) (bool, kbatch.JobConditionType) {
@@ -309,7 +325,7 @@ func getNextSchedule(cronJob *batchv1.CronJob, now time.Time) (lastMissed time.T
 	return lastMissed, sched.Next(now), nil
 }
 
-func constructJobForCronJob(cronJob *batchv1.CronJob, scheduledTime time.Time) (*kbatch.Job, error) {
+func constructJobForCronJob(r *CronJobReconciler, cronJob *batchv1.CronJob, scheduledTime time.Time) (*kbatch.Job, error) {
 	// We want job names for a given nominal start time to have a deterministic name to avoid the same job being created twice
 	name := fmt.Sprintf("%s-%d", cronJob.Name, scheduledTime.Unix())
 
@@ -338,12 +354,36 @@ func constructJobForCronJob(cronJob *batchv1.CronJob, scheduledTime time.Time) (
 
 var (
 	jobOwnerKey = ".metadata.controller"
-	apiGVStre   = batchv1.GroupVersion.String()
+	apiGVStr    = batchv1.GroupVersion.String()
 )
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CronJobReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// set up a real clock, since we're not in a test
+	if r.Clock == nil {
+		r.Clock = realClock{}
+	}
+
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &kbatch.Job{}, jobOwnerKey, func(rawObj client.Object) []string {
+		// grab the job object, extract the owner...
+		job := rawObj.(*kbatch.Job)
+		owner := metav1.GetControllerOf(job)
+		if owner == nil {
+			return nil
+		}
+		// ...make sure it's a CronJob...
+		if owner.APIVersion != apiGVStr || owner.Kind != "CronJob" {
+			return nil
+		}
+
+		// ...and if so, return it
+		return []string{owner.Name}
+	}); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&batchv1.CronJob{}).
+		Owns(&kbatch.Job{}).
 		Complete(r)
 }
